@@ -9,12 +9,17 @@ on:
       tag:
         required: true
         type: string
+      buildConfiguration:
+        required: true
+        type: string
+        default: Release
     secrets:
       token:
         required: true
-      buildargs:
-        type: string
-        default: ""
+      gprUser:
+        required: true
+      gprToken:
+        required: true
 
 jobs:
   BuildAndPushContainer:
@@ -59,7 +64,10 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
           push: ${{ github.event_name != 'pull_request' }}
-          build-args: ${{ inputs.buildargs }}
+          build-args: |
+            configuration=${{ inputs.buildConfiguration }}
+            gpruser=${{ secrets.gprUser }}
+            gprtoken=${{ secrets.gprToken }}
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
 
