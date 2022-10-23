@@ -1,0 +1,118 @@
+name: SonarCloud Report Generation
+
+on:
+  workflow_call:
+    inputs:
+      buildConfiguration:
+        required: true
+        type: string
+        default: Release
+      dotnetVersion:
+        required: true
+        type: string
+        default: "6.0.302"
+      testVerbosity:
+        required: true
+        type: string
+        default: "minimal"
+      sonarOrg:
+        required: true
+        type: string
+        default: "confuzed"
+      sonarProjectKey:
+        required: true
+        type: string
+      sonarBeVerbose:
+        type: boolean
+        default: false
+        required: true
+
+env:
+  test_verbosity: minimal
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  BuildAndTest:
+    name: "Perform SonarCloud analysis"
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1.7.2
+        with:
+          dotnet-version: ${{ inputs.dotnetVersion }}
+
+#      - name: Setup GPR nuget package source
+#        run: |
+#          dotnet nuget update source github --username ${{ github.repository_owner }} --store-password-in-clear-text --password ${{ secrets.GPR_TOKEN }}
+
+      # JDK 11 required by the SonarCloud agent
+      - name: Set up JDK 11
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.11
+
+      - name: SonarCloud package cache
+        uses: actions/cache@v2.1.5
+        with:
+          path: ~/sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Restore dotnet tools
+        run: dotnet tool restore --verbosity minimal
+
+      - name: Execute GitVersion
+        run: |
+          dotnet tool run dotnet-gitversion -output buildserver
+
+      - name: NuGet Cache
+        uses: actions/cache@v2.1.5
+        env:
+          NUGET_CACHE_KEY: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        with:
+          path: ~/.nuget/packages
+          key: ${{ env.NUGET_CACHE_KEY }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+      
+      - name: Bring up services using docker-compose
+        id: docker-compose
+        run: |
+          if [ -f "Docker/docker-compose.yaml" ]; then
+            docker-compose -f Docker/docker-compose.yaml up -d
+            echo "DOCKER_COMPOSE_UP=1" >> $GITHUB_OUTPUT
+          else
+            echo "DOCKER_COMPOSE_UP=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Begin SonarCloud analysis
+        run: |
+          dotnet tool run dotnet-sonarscanner begin /k:"${{ inputs.sonarProjectKey }}" /o:"${{ inputs.sonarOrg }}" /v:"${{ env.GitVersion_FullSemVer }}" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:"sonar.verbose=${{ inputs.sonarBeVerbose }}" /d:"sonar.cs.opencover.reportsPaths=${{ github.workspace }}/TestResults/**/*.xml" /d:"sonar.cs.vstest.reportsPaths=${{ github.workspace }}/TestResults/**/*.trx"
+
+      - name: Run tests
+        env:
+          package-version: "${{ env.GitVersion_NuGetVersionV2 }}"
+          assembly-version: "${{ env.GitVersion_AssemblySemVer }}"
+          file-version: "${{ env.GitVersion_AssemblySemFileVer }}"
+        run: dotnet test Famr.sln --configuration ${{ inputs.buildConfiguration }} --nologo --verbosity ${{ inputs.testVerbosity }} --settings Test.runsettings -p:PackageVersion=${{ env.package-version }} -p:AssemblyVersion=${{ env.assembly-version }} -p:FileVersion=${{ env.file-version }}
+
+      - name: End SonarCloud analysis
+        if: always()
+        run: dotnet tool run dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+
+      - name: Upload test report artifacts
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: test-reports
+          path: TestResults/*
+
+      - name: Stop docker services
+        if: steps.docker-compose.outputs.DOCKER_COMPOSE_UP==1
+        run: docker-compose -f Docker/docker-compose.yaml down
