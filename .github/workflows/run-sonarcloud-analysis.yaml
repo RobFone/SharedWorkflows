@@ -3,10 +3,16 @@ name: SonarCloud Report Generation
 on:
   workflow_call:
     inputs:
+      solutionFile:
+        required: true
+        type: string
       buildConfiguration:
         required: false
         type: string
         default: Release
+      dockerComposeFile:
+        required: false
+        type: string
       dotnetVersion:
         required: false
         type: string
@@ -82,10 +88,12 @@ jobs:
             ${{ runner.os }}-nuget-
       
       - name: Bring up services using docker-compose
+        if: inputs.dockerComposeFile != ''
         id: docker-compose
         run: |
-          if [ -f "Docker/docker-compose.yaml" ]; then
-            docker-compose -f Docker/docker-compose.yaml up -d
+          COMPOSE_FILE="${{ inputs.dockerComposeFile }}"
+          if [ -f "${COMPOSE_FILE}" ]; then
+            docker-compose -f "${COMPOSE_FILE}" up -d
             echo "DOCKER_COMPOSE_UP=1" >> $GITHUB_OUTPUT
           else
             echo "DOCKER_COMPOSE_UP=0" >> $GITHUB_OUTPUT
@@ -100,7 +108,7 @@ jobs:
           package-version: "${{ env.GitVersion_NuGetVersionV2 }}"
           assembly-version: "${{ env.GitVersion_AssemblySemVer }}"
           file-version: "${{ env.GitVersion_AssemblySemFileVer }}"
-        run: dotnet test Famr.sln --configuration ${{ inputs.buildConfiguration }} --nologo --verbosity ${{ inputs.testVerbosity }} --settings Test.runsettings -p:PackageVersion=${{ env.package-version }} -p:AssemblyVersion=${{ env.assembly-version }} -p:FileVersion=${{ env.file-version }}
+        run: dotnet test ${{ inputs.solutionFile }} --configuration ${{ inputs.buildConfiguration }} --nologo --verbosity ${{ inputs.testVerbosity }} --settings Test.runsettings -p:PackageVersion=${{ env.package-version }} -p:AssemblyVersion=${{ env.assembly-version }} -p:FileVersion=${{ env.file-version }}
 
       - name: End SonarCloud analysis
         if: always()
@@ -115,4 +123,4 @@ jobs:
 
       - name: Stop docker services
         if: steps.docker-compose.outputs.DOCKER_COMPOSE_UP==1
-        run: docker-compose -f Docker/docker-compose.yaml down
+        run: docker-compose -f ${{ inputs.dockerComposeFile }} down

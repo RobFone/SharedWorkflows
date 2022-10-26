@@ -13,6 +13,10 @@ on:
         required: true
         type: string
         default: Release
+      push:
+        required: false
+        type: boolean
+        default: false
     secrets:
       token:
         required: true
@@ -63,7 +67,7 @@ jobs:
           platforms: linux/amd64
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ inputs.push }}
           build-args: |
             configuration=${{ inputs.buildConfiguration }}
             gpruser=${{ secrets.gprUser }}
