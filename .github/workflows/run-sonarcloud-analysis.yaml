@@ -73,6 +73,14 @@ jobs:
       - name: Restore dotnet tools
         run: dotnet tool restore --verbosity minimal
 
+      - name: Ensure dotnet tools are configured
+        run: |
+          if [ ! -f ".config/dotnet-tools.json" ]; then
+            dotnet new tool-manifest
+          fi
+          (dotnet tool list | grep -sq gitversion.tool) || dotnet tool install gitversion.tool
+          (dotnet tool list | grep -sq dotnet-sonarscanner) || dotnet tool install dotnet-sonarscanner
+          
       - name: Execute GitVersion
         run: |
           dotnet tool run dotnet-gitversion -output buildserver
