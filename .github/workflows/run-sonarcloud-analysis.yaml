@@ -64,7 +64,7 @@ jobs:
           java-version: 1.11
 
       - name: SonarCloud package cache
-        uses: actions/cache@v2.1.5
+        uses: actions/cache@v3.0.11
         with:
           path: ~/sonar/cache
           key: ${{ runner.os }}-sonar
@@ -78,7 +78,7 @@ jobs:
           dotnet tool run dotnet-gitversion -output buildserver
 
       - name: NuGet Cache
-        uses: actions/cache@v2.1.5
+        uses: actions/cache@v3.0.11
         env:
           NUGET_CACHE_KEY: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
         with:
