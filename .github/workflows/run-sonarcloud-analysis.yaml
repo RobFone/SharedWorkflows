@@ -37,6 +37,7 @@ env:
   test_verbosity: minimal
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
+  GPR_TOKEN: ${{ secrets.GPR_TOKEN }}
 
 jobs:
   BuildAndTest:
@@ -53,9 +54,17 @@ jobs:
         with:
           dotnet-version: ${{ inputs.dotnetVersion }}
 
-#      - name: Setup GPR nuget package source
-#        run: |
-#          dotnet nuget update source github --username ${{ github.repository_owner }} --store-password-in-clear-text --password ${{ secrets.GPR_TOKEN }}
+      - name: Setup GPR nuget package source
+        if: env.GPR_TOKEN != ''
+        run: |
+          if [ ! -f nuget.config ]; then
+            echo "Adding nuget.config file and configuring Confuzed GPR feed"
+            dotnet new nugetconfig
+            dotnet nuget add source https://nuget.pkg.github.com/Confuzed/index.json --name github --username ${{ github.repository_owner }} --store-password-in-clear-text --password "${{ env.GPR_TOKEN }}" --configfile nuget.config
+          else
+            echo "Configuring Confuzed GPR feed in existing nuget.config"
+            dotnet nuget update source github --username ${{ github.repository_owner }} --store-password-in-clear-text --password "${{ env.GPR_TOKEN }}" --configfile nuget.config
+          fi
 
       # JDK 11 required by the SonarCloud agent
       - name: Set up JDK 11
