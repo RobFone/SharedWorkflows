@@ -13,6 +13,9 @@ on:
       dockerComposeFile:
         required: false
         type: string
+      dockerComposeEnv:
+        required: false
+        type: string        
       dotnetVersion:
         required: false
         type: string
@@ -110,8 +113,14 @@ jobs:
         id: docker-compose
         run: |
           COMPOSE_FILE="${{ inputs.dockerComposeFile }}"
+          ENV_CONTENT="${{ inputs.dockerComposeEnv }}"
+          COMPOSE_ARGS="-f \"${COMPOSE_FILE}\""
+          if [ ! -z "${ENV_CONTENT}" ]; then
+            echo "${ENV_CONTENT}" > docker-compose.env
+            COMPOSE_ARGS="${COMPOSE_ARGS} --env-file docker-compose.env"
+          fi
           if [ -f "${COMPOSE_FILE}" ]; then
-            docker-compose -f "${COMPOSE_FILE}" up -d
+            docker-compose ${COMPOSE_ARGS} up -d
             echo "DOCKER_COMPOSE_UP=1" >> $GITHUB_OUTPUT
           else
             echo "DOCKER_COMPOSE_UP=0" >> $GITHUB_OUTPUT
