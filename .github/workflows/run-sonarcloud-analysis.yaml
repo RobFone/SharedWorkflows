@@ -114,7 +114,7 @@ jobs:
         run: |
           COMPOSE_FILE="${{ inputs.dockerComposeFile }}"
           ENV_CONTENT="${{ inputs.dockerComposeEnv }}"
-          COMPOSE_ARGS="-f \"${COMPOSE_FILE}\""
+          COMPOSE_ARGS="-f ${COMPOSE_FILE}"
           if [ ! -z "${ENV_CONTENT}" ]; then
             echo "${ENV_CONTENT}" > docker-compose.env
             COMPOSE_ARGS="${COMPOSE_ARGS} --env-file docker-compose.env"
