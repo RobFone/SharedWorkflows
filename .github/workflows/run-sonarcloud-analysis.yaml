@@ -140,11 +140,8 @@ jobs:
           file-version: "${{ env.GitVersion_AssemblySemFileVer }}"
         run: |
           ENV_CONTENT="${{ inputs.testEnv }}"
-          if [ ! -z "${ENV_CONTENT}" ]; then
-            echo "${ENV_CONTENT}" > test.env
-            . ./test.env
-          fi
-          dotnet test ${{ inputs.solutionFile }} --configuration ${{ inputs.buildConfiguration }} --nologo --verbosity ${{ inputs.testVerbosity }} --settings Test.runsettings -p:PackageVersion=${{ env.package-version }} -p:AssemblyVersion=${{ env.assembly-version }} -p:FileVersion=${{ env.file-version }}
+          echo "${ENV_CONTENT}" > test.env
+          env $(cat test.env | xargs) dotnet test ${{ inputs.solutionFile }} --configuration ${{ inputs.buildConfiguration }} --nologo --verbosity ${{ inputs.testVerbosity }} --settings Test.runsettings -p:PackageVersion=${{ env.package-version }} -p:AssemblyVersion=${{ env.assembly-version }} -p:FileVersion=${{ env.file-version }}
 
       - name: End SonarCloud analysis
         if: always()
