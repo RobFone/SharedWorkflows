@@ -24,6 +24,9 @@ on:
         required: false
         type: string
         default: "minimal"
+      testEnv:
+        required: false
+        type: string
       sonarOrg:
         required: false
         type: string
@@ -135,7 +138,13 @@ jobs:
           package-version: "${{ env.GitVersion_NuGetVersionV2 }}"
           assembly-version: "${{ env.GitVersion_AssemblySemVer }}"
           file-version: "${{ env.GitVersion_AssemblySemFileVer }}"
-        run: dotnet test ${{ inputs.solutionFile }} --configuration ${{ inputs.buildConfiguration }} --nologo --verbosity ${{ inputs.testVerbosity }} --settings Test.runsettings -p:PackageVersion=${{ env.package-version }} -p:AssemblyVersion=${{ env.assembly-version }} -p:FileVersion=${{ env.file-version }}
+        run: |
+          ENV_CONTENT="${{ inputs.testEnv }}"
+          if [ ! -z "${ENV_CONTENT}" ]; then
+            echo "${ENV_CONTENT}" > test.env
+            . ./test.env
+          fi
+          dotnet test ${{ inputs.solutionFile }} --configuration ${{ inputs.buildConfiguration }} --nologo --verbosity ${{ inputs.testVerbosity }} --settings Test.runsettings -p:PackageVersion=${{ env.package-version }} -p:AssemblyVersion=${{ env.assembly-version }} -p:FileVersion=${{ env.file-version }}
 
       - name: End SonarCloud analysis
         if: always()
