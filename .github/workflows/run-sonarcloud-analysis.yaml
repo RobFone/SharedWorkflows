@@ -74,7 +74,7 @@ jobs:
           distribution: temurin
 
       - name: SonarCloud package cache
-        uses: actions/cache@v3.2.0
+        uses: actions/cache@v3.2.2
         with:
           path: ~/sonar/cache
           key: ${{ runner.os }}-sonar
@@ -96,7 +96,7 @@ jobs:
           dotnet tool run dotnet-gitversion -output buildserver
 
       - name: NuGet Cache
-        uses: actions/cache@v3.2.0
+        uses: actions/cache@v3.2.2
         env:
           NUGET_CACHE_KEY: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
         with:
