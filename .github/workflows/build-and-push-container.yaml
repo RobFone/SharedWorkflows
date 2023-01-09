@@ -51,7 +51,7 @@ jobs:
           password: ${{ secrets.token }}
 
       - name: Cache Docker layers
-        uses: actions/cache@v3.2.2
+        uses: actions/cache@v3.2.3
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ inputs.tag }}-${{ github.sha }}
