@@ -140,7 +140,7 @@ jobs:
           path: TestResults/*
 
       - name: Parse TRX files
-        uses: NasAmin/trx-parser@v0.2.0
+        uses: NasAmin/trx-parser@v0.3.0
         with:
           TRX_PATH: ${{ github.workspace }}/TestResults
           REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
