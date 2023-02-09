@@ -121,6 +121,13 @@ jobs:
         run: |
           dotnet tool run dotnet-sonarscanner begin /k:"${{ inputs.sonarProjectKey }}" /o:"${{ inputs.sonarOrg }}" /v:"${{ env.GitVersion_FullSemVer }}" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:"sonar.verbose=${{ inputs.sonarBeVerbose }}" /d:"sonar.cs.opencover.reportsPaths=${{ github.workspace }}/TestResults/**/*.xml" /d:"sonar.cs.vstest.reportsPaths=${{ github.workspace }}/TestResults/**/*.trx"
 
+      - name: Build solution
+        env:
+          package-version: "${{ env.GitVersion_NuGetVersionV2 }}"
+          assembly-version: "${{ env.GitVersion_AssemblySemVer }}"
+          file-version: "${{ env.GitVersion_AssemblySemFileVer }}"
+        run: dotnet build ${{ inputs.solutionFile }} --configuration ${{ inputs.buildConfiguration }} --nologo --verbosity ${{ inputs.testVerbosity }} -p:PackageVersion=${{ env.package-version }} -p:AssemblyVersion=${{ env.assembly-version }} -p:FileVersion=${{ env.file-version }}
+
       - name: Run tests
         env:
           package-version: "${{ env.GitVersion_NuGetVersionV2 }}"
