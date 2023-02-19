@@ -73,9 +73,10 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache-new
           push: ${{ inputs.push }}
           build-args: |
-            configuration=${{ inputs.buildConfiguration }}
-            gpruser=${{ secrets.gprUser }}
-            gprtoken=${{ secrets.gprToken }}
+            CONFIGURATION=${{ inputs.buildConfiguration }}
+          secrets:
+            GPRUSER=${{ secrets.gprUser }}
+            GPRTOKEN=${{ secrets.gprToken }}
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
 
