@@ -78,7 +78,7 @@ jobs:
           push: ${{ inputs.push }}
           build-args: |
             CONFIGURATION=${{ inputs.buildConfiguration }}
-          secrets:
+          secrets: |
             GPRSOURCE=${{ env.GPRSOURCE }}
             GPRUSER=${{ env.GPRUSER }}
             GPRTOKEN=${{ env.GPRTOKEN }}
