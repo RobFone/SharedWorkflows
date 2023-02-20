@@ -75,6 +75,7 @@ jobs:
           build-args: |
             CONFIGURATION=${{ inputs.buildConfiguration }}
           secrets:
+            GPRSOURCE=https://nuget.pkg.github.com/Confuzed/index.json
             GPRUSER=${{ secrets.gprUser }}
             GPRTOKEN=${{ secrets.gprToken }}
           tags: ${{ steps.docker_meta.outputs.tags }}
