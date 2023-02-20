@@ -65,6 +65,10 @@ jobs:
 
       - name: Run docker build
         uses: docker/build-push-action@v4.0.0
+        env:
+          GPRSOURCE=https://nuget.pkg.github.com/Confuzed/index.json
+          GPRUSER=${{ secrets.gprUser }}
+          GPRTOKEN=${{ secrets.gprToken }}
         with:
           context: .
           file: ${{ inputs.dockerfile }}
@@ -75,14 +79,15 @@ jobs:
           build-args: |
             CONFIGURATION=${{ inputs.buildConfiguration }}
           secrets:
-            GPRSOURCE=https://nuget.pkg.github.com/Confuzed/index.json
-            GPRUSER=${{ secrets.gprUser }}
-            GPRTOKEN=${{ secrets.gprToken }}
+            GPRSOURCE=${{ env.GPRSOURCE }}
+            GPRUSER=${{ env.GPRUSER }}
+            GPRTOKEN=${{ env.GPRTOKEN }}
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
 
       - name: Move cache
         # Temp fix
+        # TODO: Fix this by swapping to cache type 'gha' (see https://docs.docker.com/engine/reference/commandline/buildx_build/#cache-to)
         # https://github.com/docker/build-push-action/issues/252
         # https://github.com/moby/buildkit/issues/1896
         run: |
